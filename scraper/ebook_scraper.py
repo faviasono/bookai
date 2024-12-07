@@ -4,12 +4,12 @@ import re
 from typing import List, Dict, Union
 from transformers import pipeline
 import warnings
-from models.base_summarizer import SummarizerBaseModel
-from scraper.utils import generate_html_page, NON_CHAPTER_WORDS
-from summarizers.base_hf import HFBaseSummarizer
-from models.base_summarizer import SummarizationException
-from summarizers.gemini import Gemini
-from bionicreader.bionicreader import BionicReader
+from bookai.models.base_summarizer import SummarizerBaseModel
+from bookai.scraper.utils import generate_html_page, NON_CHAPTER_WORDS
+from bookai.summarizers.base_hf import HFBaseSummarizer
+from bookai.models.base_summarizer import SummarizationException
+from bookai.summarizers.gemini import Gemini
+from bookai.bionicreader.bionicreader import BionicReader
 from bs4 import BeautifulSoup
 import tqdm
 import time

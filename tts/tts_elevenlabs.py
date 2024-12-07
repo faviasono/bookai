@@ -1,6 +1,6 @@
 from os.path import join, dirname
 from dotenv import load_dotenv
-from models.base_tts import BaseTts
+from bookai.models.base_tts import BaseTts
 
 from elevenlabs import ElevenLabs, play
 
