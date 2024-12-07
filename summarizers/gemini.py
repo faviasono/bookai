@@ -9,6 +9,7 @@ from models.base_summarizer import SummarizerBaseModel
 load_dotenv(join(dirname(__file__), "../", ".env"))
 
 SYSTEM_INSTRUCTIONS = "You are a non-fictional book chapter summarizer.  Focus on the main concepts, use paragraphs (without writing paragraph) to separate concepts within the same chapter and get the most important aspect of each chapter. Also, end with a Conclusion paragraph.\nIt should be about 20% of original length that takes 80% of the most important concepts\n Do not return markdowns or HTML tags."
+REFLECTION_POINTS_PROMPT = "Can you provide a reflection points based on the summaries of all the chapters?"
 
 
 class Gemini(SummarizerBaseModel):
@@ -31,4 +32,9 @@ class Gemini(SummarizerBaseModel):
     def summarize(self, text):
         chat_session = self.model.start_chat(history=[])
         response = chat_session.send_message(text)
+        return response.text
+
+    def create_reflection(self, history=[]):  # TODO: test and check  funtionality
+        chat_session = self.model.start_chat(history=history)
+        response = chat_session.send_message(REFLECTION_POINTS_PROMPT)
         return response.text
