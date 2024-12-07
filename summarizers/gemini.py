@@ -1,12 +1,13 @@
 import os
 from os.path import join, dirname
 import google.generativeai as genai
+import json
 from dotenv import load_dotenv
 from models.base_summarizer import SummarizerBaseModel
 # Load the environment variables
 load_dotenv(join(dirname(__file__), '.env'))
 
-SYSTEM_INSTRUCTIONS = "You are a non-fictional book chapter summarizer.  Focus on the main concepts, use paragraphs (without writing paragraph) to separate concepts within the same chapter and get the most important aspect of each chapter. Also, end with a Conclusion paragraph.\nIt should be about 20% of original length that takes 80% of the most important concepts\n"
+SYSTEM_INSTRUCTIONS = "You are a non-fictional book chapter summarizer.  Focus on the main concepts, use paragraphs (without writing paragraph) to separate concepts within the same chapter and get the most important aspect of each chapter. Also, end with a Conclusion paragraph.\nIt should be about 20% of original length that takes 80% of the most important concepts\n Do not return markdowns or HTML tags."
 
 
 class Gemini(SummarizerBaseModel):
