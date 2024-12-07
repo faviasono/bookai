@@ -9,7 +9,10 @@ from summarizers.base_hf import HFBaseSummarizer
 from summarizers.gemini import Gemini
 from bs4 import BeautifulSoup
 import tqdm
+import re
+import time
 
+PATTERN_HREF = r"^[^#]+\.html"
 
 # TODO: Add vector database to store chapters
 # TODO: create 3 points for each chapter
@@ -39,13 +42,25 @@ class EbookScraper:
         except Exception as e:
             raise Exception(f"Error loading EPUB file: {str(e)}")
 
+    def _extract_title(self, text):
+        """Extract the title from the title text, there might be some IDs after the html"""
+        match = re.match(PATTERN_HREF, text)
+        if match:
+            return match.group()
+        return text
+
     def summarize_chapters(self):
         """Summarize all chapters of the EPUB book using the specified summarizer."""
         summary = {}
         if not self.book_parsed:
             self._scrape_chapters()
         for chapter_title, chapter_text in tqdm.tqdm(self.book_parsed.items()):
-            summary[chapter_title] = self.summarizer.summarize(chapter_text)
+            try:
+                summary[chapter_title] = self.summarizer.summarize(chapter_text)
+                time.sleep(0.04)  # Avoid rate limiting
+            except Exception as e:  # TODO: better handle errors
+                print(f"Error summarizing chapter '{chapter_title}': {str(e)}")
+                summary[chapter_title] = "Error summarizing chapter"
 
         self.summary = summary
         return self.summary
@@ -78,7 +93,7 @@ class EbookScraper:
             for item in items:
                 if isinstance(item, epub.Link):
                     if self.is_potential_chapter(item.title):
-                        chapters[item.href] = item.title
+                        chapters[self._extract_title(item.href)] = item.title
                 elif isinstance(item, tuple) and isinstance(item[0], epub.Section):
                     # If the item is a Section, process its links recursively
                     extract_links(item[1])
@@ -316,7 +331,7 @@ def generate_html_page(chapters, title):
 if __name__ == "__main__":
     import json
 
-    title = "The Responsible Company"
+    title = "Ultra Processed People"
     epub_path = f"/Users/andreafavia/development/bookai/files/{title}.epub"
 
     try:
