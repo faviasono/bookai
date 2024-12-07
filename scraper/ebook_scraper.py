@@ -22,7 +22,6 @@ PATTERN_HREF = r"^[^#]+\.html"
 # TODO: Add vector database to store chapters
 # TODO: create 3 points for each chapter
 # TODO: add tests
-# TODO: add logging
 
 
 class EbookScraper:
@@ -51,7 +50,6 @@ class EbookScraper:
         try:
             return epub.read_epub(epub_path)
         except Exception as e:
-            logging.error(f"Error loading EPUB file: {str(e)}")
             raise Exception(f"Error loading EPUB file: {str(e)}")
 
     def _extract_title(self, text):
@@ -73,7 +71,7 @@ class EbookScraper:
                 summary[chapter_title] = result_summary
                 if self.bionic_reader:  # it returns a html output, but I want to keep the text as well
                     summary_bionic[chapter_title] = self.bionic_reader.convert(result_summary)
-                time.sleep(0.04)  # Avoid rate limiting
+                time.sleep(0.04)  # Avoid rate limiting of gemini API
             except SummarizationException as e:
                 logging.warning(f"Error summarizing chapter '{chapter_title}': {str(e)}")
                 summary[chapter_title] = "Error summarizing chapter"
@@ -93,6 +91,7 @@ class EbookScraper:
                     soup = BeautifulSoup(item.get_body_content(), "html.parser")
                     text_content = soup.get_text()
                     if len(text_content) > MIN_LENGTH:  # Filter out short texts assuming they are not chapters
+                        logging.warning(f"Chapter '{file_name}' is too short, skipping")
                         book_parsed[self.chapters_idx.get(file_name)] = text_content
 
         self.book_parsed = book_parsed
