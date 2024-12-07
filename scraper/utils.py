@@ -108,34 +108,6 @@ def generate_html_page(chapters, title, bionic_reader=False):
                         margin: 0;
                     }}
 
-                    nav {{
-                        background-color: #eee;
-                        padding: 1rem 0;
-                    }}
-
-                    nav ul {{
-                        list-style: none;
-                        padding: 0;
-                        margin: 0;
-                        display: flex;
-                        justify-content: center;
-                    }}
-
-                    nav li {{
-                        margin: 0 1rem;
-                    }}
-
-                    nav a {{
-                        color: #333;
-                        text-decoration: none;
-                        font-weight: bold;
-                        transition: color 0.3s ease;
-                    }}
-
-                    nav a:hover {{
-                        color: #007bff;
-                    }}
-
                     main {{
                         flex-grow: 1;
                         padding: 2rem;
@@ -149,16 +121,6 @@ def generate_html_page(chapters, title, bionic_reader=False):
                         color: #333;
                         margin-bottom: 1rem;
                     }}
-
-                    footer {{
-                        background-color: #333;
-                        color: #fff;
-                        text-align: center;
-                        padding: 1rem 0;
-                        position: fixed;
-                        bottom: 0;
-                        width: 100%;
-                    }}
                 </style>
             </head>
             <body>
@@ -167,18 +129,7 @@ def generate_html_page(chapters, title, bionic_reader=False):
                     <h1>{title}</h1>
                 </header>
 
-                <nav>
-                    <ul>
-            """
-
-    for title in chapters:
-        html += f"              <li><a href='#{title.replace(' ', '-')}'>{title}</a></li>\n"
-
-    html += """
-          </ul>
-      </nav>
-
-      <main>
+                <main>
   """
 
     for title, content in chapters.items():
@@ -190,14 +141,10 @@ def generate_html_page(chapters, title, bionic_reader=False):
   """
 
     html += """
-      </main>
+          </main>
 
-      <footer>
-          &copy; 2024 Book AI: All rights reserved
-      </footer>
-
-  </body>
-  </html>
-  """
+      </body>
+      </html>
+      """
 
     return html
