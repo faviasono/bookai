@@ -314,34 +314,20 @@ def generate_html_page(chapters, title):
 
 
 if __name__ == "__main__":
-    epub_path = "/Users/andreafavia/development/bookai/files/Dopamine Nation Finding Balance in the Age of Indulgence.epub"
-
-    # epub_book = epub.read_epub(epub_path)
-    # scraper = EbookScraper(epub_path, HFBaseSummarizer())
-    # chapters = scraper.chapters_idx
-    # items = epub_book.get_items()
-
-    # book_parsed = {}
-
-    # for item in items:
-    #      if item.get_type() == ebooklib.ITEM_DOCUMENT:
-    #         if (file_name:=item.get_name()) in chapters:
-    #             soup = BeautifulSoup(item.get_body_content(), "html.parser")
-    #             text_content = soup.get_text()
-    #             if len(text_content) > 1000:
-    #                 book_parsed[chapters.get(file_name)] = text_content
-
-    # # save as json file
-    # import json
-
-    # print("Book parsed and saved as json file")
-
-    # scraper = EbookScraper(epub_path, Gemini())
-    # book_parsed = scraper.summarize_chapters()
     import json
 
-    title = "Big Feelings"
-    book_parsed = json.load(open(f"/Users/andreafavia/development/bookai/{title}.json"))
+    title = "The Responsible Company"
+    epub_path = f"/Users/andreafavia/development/bookai/files/{title}.epub"
+
+    try:
+        book_parsed = json.load(open(f"/Users/andreafavia/development/bookai/{title}.json"))
+
+    except Exception as e:
+        print(f"Error loading book: {str(e)}")
+        scraper = EbookScraper(epub_path, Gemini())
+        book_parsed = scraper.summarize_chapters()
+        json.dump(book_parsed, open(f"/Users/andreafavia/development/bookai/{title}.json", "w"))
+
     html = generate_html_page(book_parsed, title)
     with open(f"{title}_summary.html", "w") as file:
         file.write(html)
