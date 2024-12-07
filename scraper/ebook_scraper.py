@@ -18,6 +18,7 @@ import logging
 warnings.filterwarnings("ignore")
 
 PATTERN_HREF = r"^[^#]+\.html"
+MIN_LENGTH = 700
 
 # TODO: Add vector database to store chapters
 # TODO: create 3 points for each chapter
@@ -83,16 +84,16 @@ class EbookScraper:
 
     def _scrape_chapters(self):
         """Scrape the text content of the chapters from the EPUB book."""
-        MIN_LENGTH = 1000
         book_parsed = {}
         for item in self.items:
             if item.get_type() == ebooklib.ITEM_DOCUMENT:
                 if (file_name := item.get_name()) in self.chapters_idx:
                     soup = BeautifulSoup(item.get_body_content(), "html.parser")
                     text_content = soup.get_text()
-                    if len(text_content) > MIN_LENGTH:  # Filter out short texts assuming they are not chapters
-                        logging.warning(f"Chapter '{file_name}' is too short, skipping")
+                    if len(text_content) > MIN_LENGTH:
                         book_parsed[self.chapters_idx.get(file_name)] = text_content
+                    else:
+                        logging.warning(f"Chapter '{self.chapters_idx.get(file_name)}' is too short and will be skipped.")
 
         self.book_parsed = book_parsed
 
