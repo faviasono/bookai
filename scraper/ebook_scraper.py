@@ -19,7 +19,7 @@ import logging
 warnings.filterwarnings("ignore")
 
 PATTERN_HREF = r"^[^#]+\.html"
-MIN_LENGTH = 700
+MIN_LENGTH = 500
 
 # TODO: Add vector database to store chapters
 # TODO: create 3 points for each chapter
