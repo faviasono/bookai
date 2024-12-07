@@ -42,6 +42,7 @@ class EbookScraper:
         self.summarizer = summarizer
 
         self.summary = None
+        self.summary_bionic = None
         self.book_parsed = None
         self.bionic_reader = bionic_reader
 
@@ -63,19 +64,24 @@ class EbookScraper:
     def summarize_chapters(self):
         """Summarize all chapters of the EPUB book using the specified summarizer."""
         summary = {}
+        summary_bionic = {}
         if not self.book_parsed:
             self._scrape_chapters()
         for chapter_title, chapter_text in tqdm.tqdm(self.book_parsed.items()):
             try:
                 result_summary = self.summarizer.summarize(chapter_text)
-                summary[chapter_title] = self.bionic_reader.convert(result_summary) if self.bionic_reader else result_summary
+                summary[chapter_title] = result_summary
+                if self.bionic_reader:  # it returns a html output, but I want to keep the text as well
+                    summary_bionic[chapter_title] = self.bionic_reader.convert(result_summary)
                 time.sleep(0.04)  # Avoid rate limiting
             except SummarizationException as e:
-                print(f"Error summarizing chapter '{chapter_title}': {str(e)}")
+                logging.warning(f"Error summarizing chapter '{chapter_title}': {str(e)}")
                 summary[chapter_title] = "Error summarizing chapter"
+                summary_bionic[chapter_title] = "Error summarizing chapter"
 
         self.summary = summary
-        return self.summary
+        self.summary_bionic = summary_bionic
+        return self.summary_bionic
 
     def _scrape_chapters(self):
         """Scrape the text content of the chapters from the EPUB book."""
