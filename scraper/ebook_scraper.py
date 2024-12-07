@@ -2,7 +2,8 @@ import ebooklib
 from ebooklib import epub
 import re
 from typing import List, Dict, Union
-from transformers import pipeline
+
+# from transformers import pipeline
 import warnings
 from bookai.models.base_summarizer import SummarizerBaseModel
 from bookai.scraper.utils import generate_html_page, NON_CHAPTER_WORDS
@@ -35,7 +36,7 @@ class EbookScraper:
     ):
         self.epub = self._load_epub(epub_path)
         self.epub_title = self.epub.title
-        self.classifier = pipeline("zero-shot-classification", model=zero_shot_classifier_model_hf)
+        # self.classifier = pipeline("zero-shot-classification", model=zero_shot_classifier_model_hf)
         self.candidate_labels = ["about the author", "acknowledgements", "about the book", "table of content"]
         self.chapters_idx = self._get_chapters_with_uids(self.epub.toc)
         self.items = self.epub.get_items()
