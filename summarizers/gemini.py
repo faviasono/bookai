@@ -1,7 +1,6 @@
 import os
 from os.path import join, dirname
 import google.generativeai as genai
-import json
 from dotenv import load_dotenv
 from models.base_summarizer import SummarizerBaseModel
 
