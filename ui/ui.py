@@ -1,8 +1,13 @@
 import streamlit as st
-from scraper.ebook_scraper import EbookScraper  # Make sure to import your EbookScraper
-from summarizers.gemini import Gemini  # Make sure to import your summarizer
-from bionicreader.bionicreader import BionicReader
-from scraper.utils import generate_html_page
+import os
+import sys
+
+# Add the parent directory to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+from bookai.scraper.ebook_scraper import EbookScraper  # Make sure to import your EbookScraper
+from bookai.summarizers.gemini import Gemini  # Make sure to import your summarizer
+from bookai.bionicreader.bionicreader import BionicReader
+from bookai.scraper.utils import generate_html_page
 
 
 geminisummarizer = Gemini()
