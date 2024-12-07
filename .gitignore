@@ -1,0 +1,11 @@
+.env
+*.epub
+*.pdf
+*.mobi
+files/
+*egg-info
+*.egg-info
+*.egg
+
+.DS_Store
+__pycache__/
