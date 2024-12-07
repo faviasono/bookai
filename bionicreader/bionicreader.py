@@ -33,6 +33,7 @@ class BionicReader:
         if response.status_code != 200:
             logging.error(f"Error converting text: {response.text}")
             return text
+        logging.info("Converted text to Bionic Reading")
         return response.text
 
 
