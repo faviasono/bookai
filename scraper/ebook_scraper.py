@@ -5,6 +5,9 @@ from typing import List, Dict, Union
 
 # from transformers import pipeline
 import warnings
+import os, sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from bookai.models.base_summarizer import SummarizerBaseModel
 from bookai.scraper.utils import generate_html_page, NON_CHAPTER_WORDS
 from bookai.summarizers.base_hf import HFBaseSummarizer
@@ -19,7 +22,7 @@ import logging
 warnings.filterwarnings("ignore")
 
 PATTERN_HREF = r"^[^#]+\.html"
-MIN_LENGTH = 500
+MIN_LENGTH = 200
 
 # TODO: Add vector database to store chapters
 # TODO: create 3 points for each chapter
@@ -81,7 +84,7 @@ class EbookScraper:
 
         self.summary = summary
         self.summary_bionic = summary_bionic
-        return self.summary_bionic
+        return self.summary_bionic if self.bionic_reader else self.summary
 
     def _scrape_chapters(self):
         """Scrape the text content of the chapters from the EPUB book."""
@@ -94,9 +97,20 @@ class EbookScraper:
                     if len(text_content) > MIN_LENGTH:
                         book_parsed[self.chapters_idx.get(file_name)] = text_content
                     else:
-                        logging.warning(f"Chapter '{self.chapters_idx.get(file_name)}' is too short and will be skipped.")
+                        logging.warning(
+                            f"Chapter '{self.chapters_idx.get(file_name)}'  with len {len(text_content)} is too short and will be skipped."
+                        )
 
         self.book_parsed = book_parsed
+
+    def get_chapter_summary(self, idx: int):
+        """Get the text content of a specific chapter by its index."""
+        if not self.summary:
+            raise Exception("Chapters have not been summarized yet.")
+        keys = list(self.chapters_idx.values())
+        if idx >= len(keys):
+            idx = len(keys) - 1
+        return self.summary.get(keys[idx])
 
     def _get_chapters_with_uids(self, toc: List[Union[epub.Link, tuple]]) -> Dict[str, str]:
         """Extract the chapters from the table of contents of the EPUB book."""
