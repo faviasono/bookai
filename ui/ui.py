@@ -16,7 +16,7 @@ from bookai.summarizers.gemini import Gemini  # Make sure to import your summari
 from bookai.bionicreader.bionicreader import BionicReader
 from bookai.scraper.utils import generate_html_page
 from collections import defaultdict
-from tts.tts_elevenlabs import ElevenLabsTTS
+from bookai.tts.tts_elevenlabs import ElevenLabsTTS
 from elevenlabs import save
 
 if "cache_summaries" not in st.session_state:
