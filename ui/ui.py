@@ -16,7 +16,7 @@ from bookai.summarizers.gemini import Gemini  # Make sure to import your summari
 from bookai.bionicreader.bionicreader import BionicReader
 from bookai.scraper.utils import generate_html_page
 from collections import defaultdict
-from bookai.tts.tts_elevenlabs import ElevenLabsTTS
+from bookai.tts.tts_google import GoogleTTS
 from elevenlabs import save
 
 if "cache_summaries" not in st.session_state:
@@ -26,7 +26,7 @@ if "chapter_1" not in st.session_state:
     st.session_state.chapter_1 = None
 
 if "first_chapter_tts" not in st.session_state:
-    st.session_state.first_chapter_tts = "default_example.mp3"
+    st.session_state.first_chapter_tts = None
 
 geminisummarizer = Gemini()
 bionicreader = BionicReader()
@@ -45,8 +45,8 @@ def dowload_summary(summary, filename):
 @st.fragment
 def generate_audio_chapter_widget(text):
     if st.button("Listen to the first chapter"):
-        tts = ElevenLabsTTS()
-        if "first_chapter_tts" not in st.session_state:
+        tts = GoogleTTS()
+        if st.session_state.first_chapter_tts is None:
             with st.spinner("Generating audio..."):
                 audio = tts.synthesize(text)
                 if audio:
