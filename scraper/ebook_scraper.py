@@ -40,7 +40,7 @@ class EbookScraper:
         self.epub = self._load_epub(epub_path)
         self.epub_title = self.epub.title
         # self.classifier = pipeline("zero-shot-classification", model=zero_shot_classifier_model_hf)
-        self.candidate_labels = ["about the author", "acknowledgements", "about the book", "table of content"]
+        # self.candidate_labels = ["about the author", "acknowledgements", "about the book", "table of content"]
         self.chapters_idx = self._get_chapters_with_uids(self.epub.toc)
         self.items = self.epub.get_items()
         self.summarizer = summarizer
@@ -49,6 +49,10 @@ class EbookScraper:
         self.summary_bionic = None
         self.book_parsed = None
         self.bionic_reader = bionic_reader
+
+    def _is_allowed_language(self, epub):
+        """Check if the EPUB is in allowed language (English for now)."""
+        return epub.language in ["en"]
 
     @staticmethod
     def _load_epub(epub_path):
@@ -149,7 +153,7 @@ class EbookScraper:
 if __name__ == "__main__":
     import json
 
-    title = "Big Feelings"
+    title = "HomoDeus"
     epub_path = f"/Users/andreafavia/development/bookai/files/{title}.epub"
 
     try:
