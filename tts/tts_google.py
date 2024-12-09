@@ -29,6 +29,7 @@ class GoogleTTS(BaseTts):
         return text
 
     def synthesize(self, text):
+        text = texttospeech.SynthesisInput(text=self.clean_text(text))
         try:
             return self.client.synthesize_speech(
                 request={"input": text, "voice": self.voice, "audio_config": self.audio_config}
