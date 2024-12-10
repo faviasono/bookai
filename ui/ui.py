@@ -19,6 +19,8 @@ from bookai.rag.question_answering_book import QuestionAnsweringBook
 from collections import defaultdict
 from bookai.tts.tts_google import GoogleTTS
 from elevenlabs import save
+from google.oauth2 import service_account
+
 
 if "cache_summaries" not in st.session_state:
     st.session_state.cache_summaries = defaultdict(str)
@@ -41,8 +43,14 @@ if "plain_summary" not in st.session_state:
 if "rag" not in st.session_state:
     st.session_state.rag = None
 
+credentials = None
+if "gcp_service_account" in st.secrets:
+    credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
+
+
 geminisummarizer = Gemini()
 bionicreader = BionicReader()
+tts = GoogleTTS(credentials=credentials)
 
 
 def download_summary(summary, filename):
@@ -56,7 +64,6 @@ def download_summary(summary, filename):
 
 
 def generate_audio_chapter_widget(text):
-    tts = GoogleTTS()
     if st.session_state.first_chapter_tts is None:
         with st.spinner("Generating audio..."):
             audio = tts.synthesize(text)
