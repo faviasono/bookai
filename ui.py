@@ -9,8 +9,6 @@ os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
 os.environ["BIONIC_API_KEY"] = st.secrets["BIONIC_API_KEY"]
 
 
-# Add the parent directory to the Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from bookai.scraper.ebook_scraper import EbookScraper  # Make sure to import your EbookScraper
 from bookai.summarizers.gemini import Gemini  # Make sure to import your summarizer
 from bookai.bionicreader.bionicreader import BionicReader
