@@ -2,7 +2,6 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 from bookai.models.base_tts import BaseTts
 import logging
-
 from google.cloud import texttospeech
 
 # Load the environment variables
@@ -10,8 +9,8 @@ load_dotenv(join(dirname(__file__), ".env"))
 
 
 class GoogleTTS(BaseTts):
-    def __init__(self, model_name="en-US-Neural2-D"):
-        self.client = texttospeech.TextToSpeechClient()
+    def __init__(self, model_name="en-US-Neural2-D", credentials=None):
+        self.client = texttospeech.TextToSpeechClient(credentials=credentials)
 
         self.model_name = model_name
         self.voice = texttospeech.VoiceSelectionParams(
