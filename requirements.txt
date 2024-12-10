@@ -10,3 +10,4 @@ beautifulsoup4
 llama-index
 llama-index-embeddings-huggingface
 llama-index-llms-gemini
+google-cloud-texttospeech
