@@ -1,12 +1,12 @@
 elevenlabs==1.13.3
 requests==2.31.0
 streamlit==1.40.2
-tqdm==4.66.2
+tqdm
 transformers==4.40.1
-google-generativeai==0.8.3
-python-dotenv==1.0.1
-EbookLib==0.18
-beautifulsoup4==4.12.3
+google-generativeai
+python-dotenv
+EbookLib
+beautifulsoup4
 llama-index
 llama-index-embeddings-huggingface
 llama-index-llms-gemini
