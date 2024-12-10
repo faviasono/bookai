@@ -7,6 +7,6 @@ google-generativeai==0.8.3
 python-dotenv==1.0.1
 EbookLib==0.18
 beautifulsoup4==4.12.3
-llama-index==0.10.31
+llama-index
 llama-index-embeddings-huggingface
 llama-index-llms-gemini
