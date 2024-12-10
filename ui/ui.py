@@ -35,6 +35,9 @@ if "show_results" not in st.session_state:
 if "book_parsed" not in st.session_state:
     st.session_state.book_parsed = None
 
+if "plain_summary" not in st.session_state:
+    st.session_state.plain_summary = None
+
 if "rag" not in st.session_state:
     st.session_state.rag = None
 
@@ -52,18 +55,16 @@ def download_summary(summary, filename):
     )
 
 
-@st.fragment
 def generate_audio_chapter_widget(text):
-    if st.button("Listen to the first chapter"):
-        tts = GoogleTTS()
-        if st.session_state.first_chapter_tts is None:
-            with st.spinner("Generating audio..."):
-                audio = tts.synthesize(text)
-                if audio:
-                    save(audio, "temp_first_chapter.mp3")
-                    st.session_state.first_chapter_tts = "temp_first_chapter.mp3"
+    tts = GoogleTTS()
+    if st.session_state.first_chapter_tts is None:
+        with st.spinner("Generating audio..."):
+            audio = tts.synthesize(text)
+            if audio:
+                save(audio, "temp_first_chapter.mp3")
+                st.session_state.first_chapter_tts = "temp_first_chapter.mp3"
 
-        st.audio(st.session_state.first_chapter_tts, format="audio/wav", start_time=0)
+    st.sidebar.audio(st.session_state.first_chapter_tts, format="audio/wav", start_time=0)
 
 
 def main():
@@ -84,7 +85,9 @@ def main():
             "\n4. Ask a question about the book in the chat box."
         )
 
+    # Analyze test
     st.sidebar.divider()
+    st.sidebar.header("Summarize EPUB 📖")
 
     # st.sidebar.write("Upload your .epub file to analyze.")
     uploaded_file = st.sidebar.file_uploader("UPLOAD YOUR .EPUB TO ANALYZE", type="epub", label_visibility="collapsed")
@@ -107,13 +110,16 @@ def main():
                     )
                     st.session_state.chapter_summaries = st.session_state.cache_summaries[scraper.epub_title]
                     st.session_state.book_parsed = scraper.book_parsed
+                    st.session_state.plain_summary = scraper.summary
 
         download_summary(st.session_state.chapter_summaries, scraper.epub_title)
 
         if st.session_state.show_results:
             st.html(st.session_state.chapter_summaries)
 
+        # Analyze test
         st.sidebar.divider()
+        st.sidebar.header("Ask your Book 🕵🏼‍♀️")
 
         container_sidebar = st.sidebar.container()
         if st.sidebar.button("Initialize RAG") and st.session_state.book_parsed and not st.session_state.rag:
@@ -132,8 +138,19 @@ def main():
             text = st.sidebar.chat_input("Ask a question about the book")
             if text:
                 response = st.session_state.rag.query(text)
-                with st.sidebar.container():
-                    st.sidebar.write_stream(response.response_gen)
+                with st.sidebar.expander("", expanded=True):
+                    st.write_stream(response.response_gen)
+
+        if st.session_state.plain_summary:
+            # Podcast
+            st.sidebar.divider()
+            st.sidebar.header("Podcast 🎙️ (WIP ⚠️)")
+
+            chapters = list(st.session_state.plain_summary.values())
+
+            if st.sidebar.button("Generate Podcast"):
+                with st.spinner("Generating podcast..."):
+                    generate_audio_chapter_widget(chapters[0])
 
 
 if __name__ == "__main__":
