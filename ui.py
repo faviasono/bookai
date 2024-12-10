@@ -7,7 +7,7 @@ import sys
 
 os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
 os.environ["BIONIC_API_KEY"] = st.secrets["BIONIC_API_KEY"]
-
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from bookai.scraper.ebook_scraper import EbookScraper  # Make sure to import your EbookScraper
 from bookai.summarizers.gemini import Gemini  # Make sure to import your summarizer
@@ -26,9 +26,6 @@ if "cache_summaries" not in st.session_state:
 if "chapter_1" not in st.session_state:
     st.session_state.chapter_1 = None
 
-if "first_chapter_tts" not in st.session_state:
-    st.session_state.first_chapter_tts = None
-
 if "show_results" not in st.session_state:
     st.session_state.show_results = False
 
@@ -41,6 +38,8 @@ if "plain_summary" not in st.session_state:
 if "rag" not in st.session_state:
     st.session_state.rag = None
 
+if "podcast" not in st.session_state:
+    st.session_state.podcast = defaultdict(bytes)
 credentials = None
 if "gcp_service_account" in st.secrets:
     credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
@@ -59,17 +58,6 @@ def download_summary(summary, filename):
         file_name=f"{filename}_analysis.html",
         mime="text/html",
     )
-
-
-def generate_audio_chapter_widget(text):
-    if st.session_state.first_chapter_tts is None:
-        with st.spinner("Generating audio..."):
-            audio = tts.synthesize(text)
-            if audio:
-                save(audio, "temp_first_chapter.mp3")
-                st.session_state.first_chapter_tts = "temp_first_chapter.mp3"
-
-    st.sidebar.audio(st.session_state.first_chapter_tts, format="audio/wav", start_time=0)
 
 
 def main():
@@ -126,9 +114,8 @@ def main():
         st.sidebar.divider()
         st.sidebar.header("Ask your Book 🕵🏼‍♀️")
 
-        container_sidebar = st.sidebar.container()
         if st.sidebar.button("Initialize RAG") and st.session_state.book_parsed and not st.session_state.rag:
-            with container_sidebar:
+            with st.sidebar.container():
                 with st.spinner("Initializing RAG..."):
                     # Example query
                     qa_book = QuestionAnsweringBook(
@@ -151,11 +138,28 @@ def main():
             st.sidebar.divider()
             st.sidebar.header("Podcast 🎙️ (WIP ⚠️)")
 
-            chapters = list(st.session_state.plain_summary.values())
+            chapters = list(st.session_state.plain_summary.items())
 
-            if st.sidebar.button("Generate Podcast"):
-                with st.spinner("Generating podcast..."):
-                    generate_audio_chapter_widget(chapters[0])
+            if st.sidebar.button("Generate Podcast") and not st.session_state.podcast:
+                with st.sidebar.container():
+                    with st.spinner("Generating podcast..."):
+                        for title, content in chapters:
+                            audio = tts.synthesize(content)
+                            if audio:
+                                st.session_state.podcast[title] = audio
+
+            if st.session_state.podcast:
+                combined_audio = b"".join(st.session_state.podcast.values())
+                for title, audio in st.session_state.podcast.items():
+                    st.sidebar.subheader(title)
+                    st.sidebar.audio(audio, format="audio/wav", start_time=0)
+
+                st.sidebar.download_button(
+                    label="Download Podcast",
+                    data=combined_audio,
+                    file_name=f"podcast_{scraper.epub_title}.mp3",
+                    mime="application/mp3",
+                )
 
 
 if __name__ == "__main__":
