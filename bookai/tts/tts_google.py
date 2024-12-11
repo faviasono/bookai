@@ -25,6 +25,8 @@ class GoogleTTS(BaseTts):
         text = text.replace("\n", " ")
         text = text.replace("\r", " ")
         text = text.replace("\t", " ")
+        text = text.replace("**", "")
+        text = text.replace("*", "")
         return text
 
     def synthesize(self, text):
