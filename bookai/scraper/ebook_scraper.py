@@ -5,12 +5,9 @@ from typing import List, Dict, Union
 
 # from transformers import pipeline
 import warnings
-import os, sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from bookai.models.base_summarizer import SummarizerBaseModel
 from bookai.scraper.utils import generate_html_page, NON_CHAPTER_WORDS
-from bookai.summarizers.base_hf import HFBaseSummarizer
 from bookai.models.base_summarizer import SummarizationException
 from bookai.summarizers.gemini import Gemini
 from bookai.bionicreader.bionicreader import BionicReader
@@ -22,7 +19,7 @@ import logging
 warnings.filterwarnings("ignore")
 
 PATTERN_HREF = r"^[^#]+\.html"
-MIN_LENGTH = 200
+MIN_LENGTH = 105
 
 # TODO: Add vector database to store chapters
 # TODO: create 3 points for each chapter
@@ -80,7 +77,7 @@ class EbookScraper:
                 summary[chapter_title] = result_summary
                 if self.bionic_reader:  # it returns a html output, but I want to keep the text as well
                     summary_bionic[chapter_title] = self.bionic_reader.convert(result_summary)
-                time.sleep(0.04)  # Avoid rate limiting of gemini API
+                time.sleep(0.02)  # Avoid rate limiting of gemini API
             except SummarizationException as e:
                 logging.warning(f"Error summarizing chapter '{chapter_title}': {str(e)}")
                 summary[chapter_title] = "Error summarizing chapter"
@@ -153,7 +150,7 @@ class EbookScraper:
 if __name__ == "__main__":
     import json
 
-    title = "HomoDeus"
+    title = "Cibi ultraprocessati"
     epub_path = f"/Users/andreafavia/development/bookai/files/{title}.epub"
 
     try:
