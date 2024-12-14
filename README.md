@@ -1,7 +1,7 @@
 # Book AI 
 
 ## Description
-Upload and epub, generate the summary of the chapters, chat with the book and generate a podcast.
+Upload an epub, generate the summary of the chapters, chat with the book and generate a podcast.
 
 ## Table of Contents
 - [Installation](#installation)
