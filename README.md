@@ -1,7 +1,7 @@
-# Project Name
+# Book AI 
 
 ## Description
-A brief description of your project.
+Upload and epub, generate the summary of the chapters, chat with the book and generate a podcast.
 
 ## Table of Contents
 - [Installation](#installation)
