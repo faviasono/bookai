@@ -60,9 +60,10 @@ def download_summary(summary, filename):
     summary (str): The summary content to be downloaded.
     filename (str): The name of the file to save the summary as.
     """
+    st.session_state.show_results = True
+
     place_holder = st.sidebar.container()
     with place_holder:
-        st.session_state.show_results = True
         st.sidebar.download_button(
             label="Download Summary",
             data=summary,
@@ -88,12 +89,15 @@ def welcome():
         "This app allows you to analyze the content of an ebook. It will summarize the chapters and provide a reflection point based on the summaries. You can also ask questions about the book using the RAG model or listen to a podcasted version of the summaries."
     )
     st.write("Open the sidebar to upload a .EPUB and to get started.")
-    st.write("You don't have an ebook? No worries! You can use the sample ebook provided below.")
+    st.write(
+        "You don't have an ebook? You can find them on, for example, [Project Gutenberg](https://www.gutenberg.org/) or Z-library..."
+    )
     st.caption("Made with ❤️ by Andrea Favia")
 
 
 def generate_title_and_caption():
-    welcome()
+    if not st.session_state.disabled:
+        welcome()
     st.html(
         r"""<style>
 
@@ -175,7 +179,7 @@ def main():
             )
             submitted = st.form_submit_button("Summarize book 🚀", on_click=disable_form, disabled=st.session_state.disabled)
 
-    if submitted and uploaded_file is not None:
+    if uploaded_file is not None:
         with open("temp.epub", "wb") as f:
             f.write(uploaded_file.getbuffer())
         try:
@@ -198,12 +202,9 @@ def main():
             download_summary(st.session_state.chapter_summaries, scraper.epub_title)
 
             if st.session_state.show_results:
-                html_result_placeholder = st.empty()
-                with html_result_placeholder:
-                    html_result_placeholder.html(st.session_state.chapter_summaries)
-
-        finally:
-            os.remove("temp.epub")
+                st.html(st.session_state.chapter_summaries)
+        except Exception as e:
+            st.error(f"Could not parse .Epub with Error: {e}")
 
     # RAG
     if st.session_state.plain_summary:
