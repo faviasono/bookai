@@ -2,7 +2,7 @@ import streamlit as st
 import os
 from bookai.scraper.ebook_scraper import EbookScraper
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title="SumLedge 📚", page_icon="📚")
 
 os.environ["GEMINI_API_KEY"] = st.secrets["GEMINI_API_KEY"]
 os.environ["BIONIC_API_KEY"] = st.secrets["BIONIC_API_KEY"]
@@ -37,6 +37,8 @@ session_keys = {
     "plain_summary": None,
     "rag": None,
     "podcast": defaultdict(bytes),
+    "disabled": False,
+    "uploaded_file": False,
 }
 
 for key, value in session_keys.items():
@@ -76,9 +78,47 @@ def clean_state():
         del st.session_state[key]
 
 
-def main():
-    st.sidebar.title("Ebook Analyzer 📚")
-    st.title("Ebook Analyzer 📚")
+def disable_form():
+    st.session_state.disabled = True
+
+
+@st.dialog("Welcome to SumLedge 📚")
+def welcome():
+    st.write(
+        "This app allows you to analyze the content of an ebook. It will summarize the chapters and provide a reflection point based on the summaries. You can also ask questions about the book using the RAG model or listen to a podcasted version of the summaries."
+    )
+    st.write("Open the sidebar to upload a .EPUB and to get started.")
+    st.write("You don't have an ebook? No worries! You can use the sample ebook provided below.")
+    st.caption("Made with ❤️ by Andrea Favia")
+
+
+def generate_title_and_caption():
+    welcome()
+    st.html(
+        r"""<style>
+
+        .st-emotion-cache-19ee8pt {
+                height: 3rem;
+                width : 3rem;
+                # background-color: RED;
+                animation: hithere 1s ease infinite;
+            }
+        @keyframes hithere {
+            30% { transform: scale(1.2); }
+            40%, 60% { transform: rotate(-20deg) scale(1.2); }
+            50% { transform: rotate(20deg) scale(1.2); }
+            70% { transform: rotate(0deg) scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        </style>
+        """,
+    )
+    st.sidebar.title("SumLedge 📚")
+    st.title("SumLedge 📚")
+    st.caption("Analyze the content of an ebook and generate summaries, chat with the book, and listen to an automated podcast.")
+    st.caption("Open the sidebar to get started.")
+
+    st.divider()
     button(username="faviasono", text="Buy me a coffe", floating=False)
     st.markdown(
         f"""
@@ -94,8 +134,8 @@ def main():
         unsafe_allow_html=True,
     )
 
-    st.divider()
 
+def generate_about_and_how_sections():
     with st.sidebar.expander("About"):
         st.write(
             "This app allows you to analyze the content of an ebook. It will summarize the chapters and provide a reflection point based on the summaries. You can also ask questions about the book using the RAG model or listen to a podcasted version of the summaries."
@@ -110,19 +150,38 @@ def main():
             "\n5. Click on 'Generate Podcast' to create a podcast of the summaries."
         )
 
-    # Analyze test
     st.sidebar.divider()
-    st.sidebar.header("Summarize EPUB 📖")
 
-    # st.sidebar.write("Upload your .epub file to analyze.")
-    uploaded_file = st.sidebar.file_uploader("UPLOAD YOUR .EPUB TO ANALYZE", type="epub", label_visibility="collapsed")
 
-    if uploaded_file is not None:
+def main():
+    generate_title_and_caption()
+
+    generate_about_and_how_sections()
+
+    # Summarize EPUB
+
+    st.sidebar.header(
+        "Summarize EPUB 📖",
+        help="Identify the chapters and generate summaries for the book. You can also use the bionic reader to facilitate the reading process.",
+    )
+
+    with st.form(key="upload_epub"):
+        with st.sidebar:
+            uploaded_file = st.file_uploader("UPLOAD YOUR .EPUB TO ANALYZE", type="epub", label_visibility="collapsed")
+            checkbox = st.checkbox(
+                "Use bionic reading",
+                value=False,
+                help="Bionic reading is a method facilitating the reading process by guiding the eyes through the text with artificial fixation points.",
+            )
+            submitted = st.form_submit_button("Summarize book 🚀", on_click=disable_form, disabled=st.session_state.disabled)
+
+    if submitted and uploaded_file is not None:
         with open("temp.epub", "wb") as f:
             f.write(uploaded_file.getbuffer())
         try:
             # Process the file using EbookScraper
-            scraper = EbookScraper("temp.epub", geminisummarizer, bionic_reader=bionicreader)
+
+            scraper = EbookScraper("temp.epub", geminisummarizer, bionic_reader=bionicreader if checkbox else None)
 
             if "chapter_summaries" not in st.session_state:
                 if scraper.epub_title in st.session_state.cache_summaries:
@@ -146,36 +205,43 @@ def main():
         finally:
             os.remove("temp.epub")
 
-    st.sidebar.divider()
-    st.sidebar.header("Ask your Book 🕵🏼‍♀️")
-    # Analyze test
-    if (
-        st.sidebar.button("Initialize RAG ", disabled=st.session_state.book_parsed is None)
-        and st.session_state.book_parsed
-        and not st.session_state.rag
-    ):
-        with st.sidebar.container():
-            with st.spinner("Initializing RAG... \n It might take a few minutes."):
-                # Example query
-                qa_book = QuestionAnsweringBook(
-                    st.session_state.book_parsed,
-                    qa_embedding_model,
-                    "models/gemini-1.5-flash",
-                    os.environ.get("GEMINI_API_KEY"),
-                )
-                st.session_state.rag = qa_book
+    # RAG
+    if st.session_state.plain_summary:
+        st.sidebar.header(
+            "Ask your Book 🕵🏼‍♀️",
+            help="Do you have specific questions about the book, or would you like me to elaborate on points from the summaries?",
+        )
+        if (
+            st.sidebar.button("Start asking your book ", disabled=st.session_state.book_parsed is None)
+            and st.session_state.book_parsed
+            and not st.session_state.rag
+        ):
+            with st.sidebar.container():
+                with st.spinner("Initializing RAG system... \n It might take a few minutes."):
+                    # Example query
+                    qa_book = QuestionAnsweringBook(
+                        st.session_state.book_parsed,
+                        qa_embedding_model,
+                        "models/gemini-1.5-flash",
+                        os.environ.get("GEMINI_API_KEY"),
+                    )
+                    st.session_state.rag = qa_book
 
-    if st.session_state.rag:
-        text = st.sidebar.chat_input("Ask a question about the book")
-        if text:
-            response = st.session_state.rag.query(text)
-            with st.sidebar.expander("", expanded=True):
-                st.write_stream(response.response_gen)
+        if st.session_state.rag:
+            text = st.sidebar.chat_input("Ask a question about the book")
+            if text:
+                response = st.session_state.rag.query(text)
+                with st.sidebar.expander("", expanded=True):
+                    st.write_stream(response.response_gen)
+
+    # Podcast
 
     if st.session_state.plain_summary:
         # Podcast
         st.sidebar.divider()
-        st.sidebar.header("Podcast 🎙️")
+        st.sidebar.header(
+            "Podcast 🎙️", help="Convert the summary into an audio format that you can download and listen to anytime, anywhere."
+        )
 
         chapters = list(st.session_state.plain_summary.items())
 
