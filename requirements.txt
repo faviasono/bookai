@@ -1,0 +1,16 @@
+llama_index
+llama-index-llms-gemini
+llama-index-embeddings-huggingface
+google-cloud-texttospeech
+beautifulsoup4
+EbookLib
+protobuf
+python-dotenv
+Requests
+setuptools
+streamlit
+tqdm
+google-auth
+google-auth-httplib2
+elevenlabs
+streamlit-extras

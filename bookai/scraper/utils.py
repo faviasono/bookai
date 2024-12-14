@@ -66,7 +66,7 @@ NON_CHAPTER_WORDS = [
 ]
 
 
-def generate_html_page(chapters, title, bionic_reader=False):
+def generate_html_page(chapters, title):
     """
     Generates an HTML page with a stylish layout for the given chapters.
 

@@ -12,3 +12,6 @@ __pycache__/
 *.html
 *.json
 
+.streamlit/secrets.toml
+
+*.mp3

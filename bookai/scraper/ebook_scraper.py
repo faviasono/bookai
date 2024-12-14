@@ -2,14 +2,15 @@ import ebooklib
 from ebooklib import epub
 import re
 from typing import List, Dict, Union
-from transformers import pipeline
+
+# from transformers import pipeline
 import warnings
-from models.base_summarizer import SummarizerBaseModel
-from scraper.utils import generate_html_page, NON_CHAPTER_WORDS
-from summarizers.base_hf import HFBaseSummarizer
-from models.base_summarizer import SummarizationException
-from summarizers.gemini import Gemini
-from bionicreader.bionicreader import BionicReader
+
+from bookai.models.base_summarizer import SummarizerBaseModel
+from bookai.scraper.utils import generate_html_page, NON_CHAPTER_WORDS
+from bookai.models.base_summarizer import SummarizationException
+from bookai.summarizers.gemini import Gemini
+from bookai.bionicreader.bionicreader import BionicReader
 from bs4 import BeautifulSoup
 import tqdm
 import time
@@ -18,7 +19,7 @@ import logging
 warnings.filterwarnings("ignore")
 
 PATTERN_HREF = r"^[^#]+\.html"
-MIN_LENGTH = 700
+MIN_LENGTH = 105
 
 # TODO: Add vector database to store chapters
 # TODO: create 3 points for each chapter
@@ -35,8 +36,8 @@ class EbookScraper:
     ):
         self.epub = self._load_epub(epub_path)
         self.epub_title = self.epub.title
-        self.classifier = pipeline("zero-shot-classification", model=zero_shot_classifier_model_hf)
-        self.candidate_labels = ["about the author", "acknowledgements", "about the book", "table of content"]
+        # self.classifier = pipeline("zero-shot-classification", model=zero_shot_classifier_model_hf)
+        # self.candidate_labels = ["about the author", "acknowledgements", "about the book", "table of content"]
         self.chapters_idx = self._get_chapters_with_uids(self.epub.toc)
         self.items = self.epub.get_items()
         self.summarizer = summarizer
@@ -45,6 +46,10 @@ class EbookScraper:
         self.summary_bionic = None
         self.book_parsed = None
         self.bionic_reader = bionic_reader
+
+    def _is_allowed_language(self, epub):
+        """Check if the EPUB is in allowed language (English for now)."""
+        return epub.language in ["en"]
 
     @staticmethod
     def _load_epub(epub_path):
@@ -72,7 +77,7 @@ class EbookScraper:
                 summary[chapter_title] = result_summary
                 if self.bionic_reader:  # it returns a html output, but I want to keep the text as well
                     summary_bionic[chapter_title] = self.bionic_reader.convert(result_summary)
-                time.sleep(0.04)  # Avoid rate limiting of gemini API
+                time.sleep(0.02)  # Avoid rate limiting of gemini API
             except SummarizationException as e:
                 logging.warning(f"Error summarizing chapter '{chapter_title}': {str(e)}")
                 summary[chapter_title] = "Error summarizing chapter"
@@ -80,7 +85,7 @@ class EbookScraper:
 
         self.summary = summary
         self.summary_bionic = summary_bionic
-        return self.summary_bionic
+        return self.summary_bionic if self.bionic_reader else self.summary
 
     def _scrape_chapters(self):
         """Scrape the text content of the chapters from the EPUB book."""
@@ -93,9 +98,20 @@ class EbookScraper:
                     if len(text_content) > MIN_LENGTH:
                         book_parsed[self.chapters_idx.get(file_name)] = text_content
                     else:
-                        logging.warning(f"Chapter '{self.chapters_idx.get(file_name)}' is too short and will be skipped.")
+                        logging.warning(
+                            f"Chapter '{self.chapters_idx.get(file_name)}'  with len {len(text_content)} is too short and will be skipped."
+                        )
 
         self.book_parsed = book_parsed
+
+    def get_chapter_summary(self, idx: int):
+        """Get the text content of a specific chapter by its index."""
+        if not self.summary:
+            raise Exception("Chapters have not been summarized yet.")
+        keys = list(self.chapters_idx.values())
+        if idx >= len(keys):
+            idx = len(keys) - 1
+        return self.summary.get(keys[idx])
 
     def _get_chapters_with_uids(self, toc: List[Union[epub.Link, tuple]]) -> Dict[str, str]:
         """Extract the chapters from the table of contents of the EPUB book."""
@@ -134,7 +150,7 @@ class EbookScraper:
 if __name__ == "__main__":
     import json
 
-    title = "Big Feelings"
+    title = "Cibi ultraprocessati"
     epub_path = f"/Users/andreafavia/development/bookai/files/{title}.epub"
 
     try:
