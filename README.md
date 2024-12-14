@@ -1,7 +1,13 @@
 # Book AI 
 
+stremlit app: https://sumledge.streamlit.app
+
+
+
 ## Description
 Upload an epub, generate the summary of the chapters, chat with the book and generate a podcast.
+
+Built with streamlit, gemini, llama-index, bionic-reading, and elevenlabs
 
 ## Table of Contents
 - [Installation](#installation)
