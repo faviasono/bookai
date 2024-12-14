@@ -1,3 +1,4 @@
+
 # Sumledge - Book AI
 Sumledge is a simple application that allows scraping chapters content from .Epub, summarize the content, initialize a RAG to ask specific question about the book and even generate a podcast with Text-To-Speech (TTS) technologies.
 
@@ -15,6 +16,12 @@ The project uses Google APIs both for Vertex AI Gemini as well as for TTS models
 It's possible to quickly change the models for the embeddings and for gemini, as well as the model for TTS to get a more natural voice (more expensive).
 At the same time, a TTS interface with ElevenLabs is implemented.
 
+
+
+=======
+# Book AI 
+
+stremlit app: https://sumledge.streamlit.app
 
 
 
@@ -76,7 +83,7 @@ client_x509_cert_url = "CLIENT_CERT_URL"
 
 Run the application with the following:
 ```bash
-streamlit run ui.py
+# streamlit run ui.py
 
 ```
 
