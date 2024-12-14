@@ -74,7 +74,7 @@ client_x509_cert_url = "CLIENT_CERT_URL"
 
 Run the application with the following:
 ```bash
-# streamlit run ui.py
+streamlit run ui.py
 
 ```
 
