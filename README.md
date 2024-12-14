@@ -28,7 +28,7 @@ pip install .
 Instructions on how to use your project.
 
 ```bash
-# Run the project
+# streamlit run ui.py
 
 ```
 
