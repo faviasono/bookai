@@ -203,7 +203,7 @@ def main():
                 if scraper.epub_title in st.session_state.cache_summaries:
                     st.session_state.chapter_summaries = st.session_state.cache_summaries[scraper.epub_title]
                 else:
-                    with st.spinner("Analyzing chapters.. It could take a few minutes."):
+                    with st.spinner("Analyzing chapters... It could take a few minutes."):
                         st.session_state.cache_summaries[scraper.epub_title] = generate_html_page(
                             scraper.summarize_chapters(), scraper.epub_title
                         )
@@ -261,11 +261,13 @@ def main():
 
         if st.sidebar.button("Generate Podcast") and not st.session_state.podcast:
             with st.sidebar.container():
-                with st.spinner("Generating podcast..."):
-                    for title, content in chapters:
-                        audio = tts.synthesize(content)
-                        if audio:
-                            st.session_state.podcast[title] = audio
+                progress_bar = st.progress(0, text="Generating podcast...")
+                for i, (title, content) in enumerate(chapters):
+                    audio = tts.synthesize(content)
+                    if audio:
+                        st.session_state.podcast[title] = audio
+                    progress_bar.progress((i + 1) / len(chapters))
+                progress_bar.empty()
 
         if st.session_state.podcast:
             combined_audio = b"".join(st.session_state.podcast.values())
