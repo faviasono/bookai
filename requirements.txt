@@ -14,3 +14,4 @@ google-auth
 google-auth-httplib2
 elevenlabs
 streamlit-extras
+pypub
