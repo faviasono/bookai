@@ -100,6 +100,7 @@ def welcome():
         "This app allows you to analyze the content of an ebook. It will summarize the chapters and provide a reflection point based on the summaries. You can also ask questions about the book using the RAG model or listen to a podcasted version of the summaries."
     )
     st.write("Open the sidebar to upload a .EPUB and to get started.")
+    st.write("To try another book, refresh the page.")
     st.write(
         "You don't have an ebook? You can find them on, for example, [Project Gutenberg](https://www.gutenberg.org/) or Z-library..."
     )
