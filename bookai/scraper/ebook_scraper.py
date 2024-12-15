@@ -21,7 +21,6 @@ warnings.filterwarnings("ignore")
 PATTERN_HREF = r"^[^#]+\.html"
 MIN_LENGTH = 105
 
-# TODO: Add vector database to store chapters
 # TODO: create 3 points for each chapter
 # TODO: add tests
 
@@ -36,8 +35,6 @@ class EbookScraper:
     ):
         self.epub = self._load_epub(epub_path)
         self.epub_title = self.epub.title
-        # self.classifier = pipeline("zero-shot-classification", model=zero_shot_classifier_model_hf)
-        # self.candidate_labels = ["about the author", "acknowledgements", "about the book", "table of content"]
         self.chapters_idx = self._get_chapters_with_uids(self.epub.toc)
         self.items = self.epub.get_items()
         self.summarizer = summarizer
