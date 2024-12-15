@@ -23,7 +23,7 @@ from collections import defaultdict
 from bookai.tts.tts_google import GoogleTTS
 from google.oauth2 import service_account
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-
+from bookai.converter.epubgenerator import EpubGenerator
 from streamlit_extras.buy_me_a_coffee import button
 
 qa_embedding_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
@@ -64,12 +64,23 @@ def download_summary(summary, filename):
 
     place_holder = st.sidebar.container()
     with place_holder:
-        st.sidebar.download_button(
-            label="Download Summary",
-            data=summary,
-            file_name=f"{filename}_analysis.html",
-            mime="text/html",
-        )
+        c1, c2 = st.sidebar.columns([1, 1])
+        with c1:
+            st.sidebar.download_button(
+                label="Download Summary",
+                data=summary,
+                file_name=f"{filename}_analysis.html",
+                mime="text/html",
+            )
+
+        with c2:
+            path = EpubGenerator(st.session_state.plain_summary, filename).generate_epub()
+            st.sidebar.download_button(
+                label="Download Epub",
+                data=open(path, "rb").read(),
+                file_name=f"{filename}_summary.epub",
+                mime="application/epub",
+            )
 
     return place_holder
 
@@ -105,7 +116,7 @@ def generate_title_and_caption():
                 height: 3rem;
                 width : 3rem;
                 # background-color: RED;
-                animation: hithere 1s ease infinite;
+                animation: hithere 2s ease infinite;
             }
         @keyframes hithere {
             30% { transform: scale(1.2); }
@@ -177,7 +188,7 @@ def main():
                 value=False,
                 help="Bionic reading is a method facilitating the reading process by guiding the eyes through the text with artificial fixation points.",
             )
-            submitted = st.form_submit_button("Summarize book 🚀", on_click=disable_form, disabled=st.session_state.disabled)
+            _ = st.form_submit_button("Summarize book 🚀", on_click=disable_form, disabled=st.session_state.disabled)
 
     if uploaded_file is not None:
         with open("temp.epub", "wb") as f:
@@ -205,6 +216,7 @@ def main():
                 st.html(st.session_state.chapter_summaries)
         except Exception as e:
             st.error(f"Could not parse .Epub with Error: {e}")
+            st.error("Please refresh the page and try again with a different file.")
 
     # RAG
     if st.session_state.plain_summary:
