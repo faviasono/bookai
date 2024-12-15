@@ -48,8 +48,8 @@ if "gcp_service_account" in st.secrets:
     credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
 
 
-geminisummarizer = Gemini()
-bionicreader = BionicReader()
+geminisummarizer = Gemini
+bionicreader = BionicReader
 tts = GoogleTTS(credentials=credentials if "gcp_service_account" in st.secrets else None)
 
 
@@ -205,7 +205,7 @@ def main():
                 else:
                     with st.spinner("Analyzing chapters... It could take a few minutes."):
                         st.session_state.cache_summaries[scraper.epub_title] = generate_html_page(
-                            scraper.summarize_chapters(), scraper.epub_title
+                            scraper.summarize_chapters_mp(), scraper.epub_title
                         )
                         st.session_state.chapter_summaries = st.session_state.cache_summaries[scraper.epub_title]
                         st.session_state.book_parsed = scraper.book_parsed
