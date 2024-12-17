@@ -23,6 +23,8 @@ At the same time, a TTS interface with ElevenLabs is implemented.
 
 stremlit app: https://sumledge.streamlit.app
 
+Example of Epub: https://drive.google.com/file/d/151oujA8zI3PVzSlNycD2iKyaTKhu0dsQ/view?usp=share_link
+
 
 
 ## Table of Contents
