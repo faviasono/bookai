@@ -23,7 +23,7 @@ from collections import defaultdict
 from bookai.tts.tts_google import GoogleTTS
 from google.oauth2 import service_account
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-
+from bookai.converter.epubgenerator import EpubGenerator
 from streamlit_extras.buy_me_a_coffee import button
 
 qa_embedding_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
@@ -48,8 +48,8 @@ if "gcp_service_account" in st.secrets:
     credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
 
 
-geminisummarizer = Gemini()
-bionicreader = BionicReader()
+geminisummarizer = Gemini
+bionicreader = BionicReader
 tts = GoogleTTS(credentials=credentials if "gcp_service_account" in st.secrets else None)
 
 
@@ -60,15 +60,27 @@ def download_summary(summary, filename):
     summary (str): The summary content to be downloaded.
     filename (str): The name of the file to save the summary as.
     """
+    st.session_state.show_results = True
+
     place_holder = st.sidebar.container()
     with place_holder:
-        st.session_state.show_results = True
-        st.sidebar.download_button(
-            label="Download Summary",
-            data=summary,
-            file_name=f"{filename}_analysis.html",
-            mime="text/html",
-        )
+        c1, c2 = st.sidebar.columns([1, 1])
+        with c1:
+            st.sidebar.download_button(
+                label="Download Summary",
+                data=summary,
+                file_name=f"{filename}_analysis.html",
+                mime="text/html",
+            )
+
+        with c2:
+            path = EpubGenerator(st.session_state.plain_summary, filename).generate_epub()
+            st.sidebar.download_button(
+                label="Download Epub",
+                data=open(path, "rb").read(),
+                file_name=f"{filename}_summary.epub",
+                mime="application/epub",
+            )
 
     return place_holder
 
@@ -88,12 +100,16 @@ def welcome():
         "This app allows you to analyze the content of an ebook. It will summarize the chapters and provide a reflection point based on the summaries. You can also ask questions about the book using the RAG model or listen to a podcasted version of the summaries."
     )
     st.write("Open the sidebar to upload a .EPUB and to get started.")
-    st.write("You don't have an ebook? No worries! You can use the sample ebook provided below.")
+    st.write("To try another book, refresh the page.")
+    st.write(
+        "You don't have an ebook? You can find them on, for example, [Project Gutenberg](https://www.gutenberg.org/) or Z-library..."
+    )
     st.caption("Made with ❤️ by Andrea Favia")
 
 
 def generate_title_and_caption():
-    welcome()
+    if not st.session_state.disabled:
+        welcome()
     st.html(
         r"""<style>
 
@@ -101,7 +117,7 @@ def generate_title_and_caption():
                 height: 3rem;
                 width : 3rem;
                 # background-color: RED;
-                animation: hithere 1s ease infinite;
+                animation: hithere 2s ease infinite;
             }
         @keyframes hithere {
             30% { transform: scale(1.2); }
@@ -173,9 +189,9 @@ def main():
                 value=False,
                 help="Bionic reading is a method facilitating the reading process by guiding the eyes through the text with artificial fixation points.",
             )
-            submitted = st.form_submit_button("Summarize book 🚀", on_click=disable_form, disabled=st.session_state.disabled)
+            _ = st.form_submit_button("Summarize book 🚀", on_click=disable_form, disabled=st.session_state.disabled)
 
-    if submitted and uploaded_file is not None:
+    if uploaded_file is not None:
         with open("temp.epub", "wb") as f:
             f.write(uploaded_file.getbuffer())
         try:
@@ -187,9 +203,9 @@ def main():
                 if scraper.epub_title in st.session_state.cache_summaries:
                     st.session_state.chapter_summaries = st.session_state.cache_summaries[scraper.epub_title]
                 else:
-                    with st.spinner("Analyzing chapters.. It could take a few minutes."):
+                    with st.spinner("Analyzing chapters... It could take a few minutes."):
                         st.session_state.cache_summaries[scraper.epub_title] = generate_html_page(
-                            scraper.summarize_chapters(), scraper.epub_title
+                            scraper.summarize_chapters_mp(), scraper.epub_title
                         )
                         st.session_state.chapter_summaries = st.session_state.cache_summaries[scraper.epub_title]
                         st.session_state.book_parsed = scraper.book_parsed
@@ -198,12 +214,10 @@ def main():
             download_summary(st.session_state.chapter_summaries, scraper.epub_title)
 
             if st.session_state.show_results:
-                html_result_placeholder = st.empty()
-                with html_result_placeholder:
-                    html_result_placeholder.html(st.session_state.chapter_summaries)
-
-        finally:
-            os.remove("temp.epub")
+                st.html(st.session_state.chapter_summaries)
+        except Exception as e:
+            st.error(f"Could not parse .Epub with Error: {e}")
+            st.error("Please refresh the page and try again with a different file.")
 
     # RAG
     if st.session_state.plain_summary:
@@ -247,11 +261,13 @@ def main():
 
         if st.sidebar.button("Generate Podcast") and not st.session_state.podcast:
             with st.sidebar.container():
-                with st.spinner("Generating podcast..."):
-                    for title, content in chapters:
-                        audio = tts.synthesize(content)
-                        if audio:
-                            st.session_state.podcast[title] = audio
+                progress_bar = st.progress(0, text="Generating podcast...")
+                for i, (title, content) in enumerate(chapters):
+                    audio = tts.synthesize(content)
+                    if audio:
+                        st.session_state.podcast[title] = audio
+                    progress_bar.progress((i + 1) / len(chapters))
+                progress_bar.empty()
 
         if st.session_state.podcast:
             combined_audio = b"".join(st.session_state.podcast.values())

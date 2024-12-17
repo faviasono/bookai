@@ -1,3 +1,4 @@
+import concurrent.futures
 import ebooklib
 from ebooklib import epub
 import re
@@ -15,13 +16,13 @@ from bs4 import BeautifulSoup
 import tqdm
 import time
 import logging
+import concurrent
 
 warnings.filterwarnings("ignore")
 
 PATTERN_HREF = r"^[^#]+\.html"
 MIN_LENGTH = 105
 
-# TODO: Add vector database to store chapters
 # TODO: create 3 points for each chapter
 # TODO: add tests
 
@@ -31,13 +32,10 @@ class EbookScraper:
         self,
         epub_path: str,
         summarizer: SummarizerBaseModel,
-        zero_shot_classifier_model_hf: str = "facebook/bart-large-mnli",
         bionic_reader: BionicReader = None,
     ):
         self.epub = self._load_epub(epub_path)
         self.epub_title = self.epub.title
-        # self.classifier = pipeline("zero-shot-classification", model=zero_shot_classifier_model_hf)
-        # self.candidate_labels = ["about the author", "acknowledgements", "about the book", "table of content"]
         self.chapters_idx = self._get_chapters_with_uids(self.epub.toc)
         self.items = self.epub.get_items()
         self.summarizer = summarizer
@@ -69,14 +67,20 @@ class EbookScraper:
         """Summarize all chapters of the EPUB book using the specified summarizer."""
         summary = {}
         summary_bionic = {}
+
+        # Initialize summarizer and bionic_reader because MP does not allow to pass class methods
+        summarizer = self.summarizer()
+        bionic_reader = self.bionic_reader() if self.bionic_reader else None
+
         if not self.book_parsed:
             self._scrape_chapters()
+        start_time = time.time()
         for chapter_title, chapter_text in tqdm.tqdm(self.book_parsed.items()):
             try:
-                result_summary = self.summarizer.summarize(chapter_text)
+                result_summary = summarizer.summarize(chapter_text)
                 summary[chapter_title] = result_summary
                 if self.bionic_reader:  # it returns a html output, but I want to keep the text as well
-                    summary_bionic[chapter_title] = self.bionic_reader.convert(result_summary)
+                    summary_bionic[chapter_title] = bionic_reader.convert(result_summary)
                 time.sleep(0.02)  # Avoid rate limiting of gemini API
             except SummarizationException as e:
                 logging.warning(f"Error summarizing chapter '{chapter_title}': {str(e)}")
@@ -85,6 +89,7 @@ class EbookScraper:
 
         self.summary = summary
         self.summary_bionic = summary_bionic
+        print(f"Time elapsed: {time.time() - start_time}")
         return self.summary_bionic if self.bionic_reader else self.summary
 
     def _scrape_chapters(self):
@@ -146,11 +151,58 @@ class EbookScraper:
         # If no clear indicators, consider it a chapter by default
         return True
 
+    @staticmethod
+    def _summarize_chapter_worker(args):
+        """Standalone function to summarize a chapter."""
+        chapter_title, chapter_text, summarizer, bionic_reading = args
+
+        # Initialize summarizer and bionic_reader inside the worker
+        summarizer = summarizer()
+        bionic_reader = bionic_reading() if bionic_reading else None
+
+        try:
+            result_summary = summarizer.summarize(chapter_text)
+            if bionic_reader:
+                result_summary_bionic = bionic_reader.convert(result_summary)
+                return chapter_title, result_summary, result_summary_bionic
+            else:
+                return chapter_title, result_summary, None
+        except SummarizationException as e:
+            logging.warning(f"Error summarizing chapter '{chapter_title}': {str(e)}")
+            return chapter_title, "Error summarizing chapter", "Error summarizing chapter"
+
+    def summarize_chapters_mp(self):
+        """Summarize all chapters of the EPUB book using the specified summarizer using multiprocessing."""
+        if not self.book_parsed:
+            self._scrape_chapters()
+
+        self.summary = {}
+        self.summary_bionic = {}
+        start_time = time.time()
+        chapters = list(self.book_parsed.items())
+        # Prepare arguments for the worker function
+        worker_args = [
+            (chapter_title, chapter_text, self.summarizer, self.bionic_reader) for chapter_title, chapter_text in chapters
+        ]
+
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            results = list(tqdm.tqdm(executor.map(self._summarize_chapter_worker, worker_args), total=len(self.book_parsed)))
+
+        # Process results
+        for chapter_title, result_summary, result_summary_bionic in results:
+            self.summary[chapter_title] = result_summary
+            if self.bionic_reader:
+                self.summary_bionic[chapter_title] = result_summary_bionic
+
+        print(f"Time elapsed: {time.time() - start_time}")
+
+        return self.summary_bionic if self.bionic_reader else self.summary
+
 
 if __name__ == "__main__":
     import json
 
-    title = "Cibi ultraprocessati"
+    title = "Ultra Processed People"
     epub_path = f"/Users/andreafavia/development/bookai/files/{title}.epub"
 
     try:
@@ -158,8 +210,8 @@ if __name__ == "__main__":
 
     except Exception as e:
         print(f"Error loading book: {str(e)}")
-        scraper = EbookScraper(epub_path, Gemini(), bionic_reader=BionicReader())
-        book_parsed = scraper.summarize_chapters()
+        scraper = EbookScraper(epub_path, Gemini, bionic_reader=BionicReader)
+        book_parsed = scraper.summarize_chapters_mp()
         json.dump(book_parsed, open(f"/Users/andreafavia/development/bookai/{title}.json", "w"))
 
     html = generate_html_page(book_parsed, title)

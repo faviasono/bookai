@@ -16,6 +16,16 @@ The project uses Google APIs both for Vertex AI Gemini as well as for TTS models
 It's possible to quickly change the models for the embeddings and for gemini, as well as the model for TTS to get a more natural voice (more expensive).
 At the same time, a TTS interface with ElevenLabs is implemented.
 
+
+
+# Book AI 
+
+Stremlit app: https://sumledge.streamlit.app
+
+Example of Epub: https://drive.google.com/file/d/151oujA8zI3PVzSlNycD2iKyaTKhu0dsQ/view?usp=share_link
+
+
+
 ## Table of Contents
 - [Installation](#installation)
 - [Usage](#usage)
