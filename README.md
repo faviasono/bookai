@@ -18,10 +18,9 @@ At the same time, a TTS interface with ElevenLabs is implemented.
 
 
 
-=======
 # Book AI 
 
-stremlit app: https://sumledge.streamlit.app
+Stremlit app: https://sumledge.streamlit.app
 
 Example of Epub: https://drive.google.com/file/d/151oujA8zI3PVzSlNycD2iKyaTKhu0dsQ/view?usp=share_link
 
@@ -85,7 +84,7 @@ client_x509_cert_url = "CLIENT_CERT_URL"
 
 Run the application with the following:
 ```bash
-# streamlit run ui.py
+streamlit run ui.py
 
 ```
 
@@ -111,5 +110,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## TODO:
 
-[] Dockerize
-[] Deploy on GCP
+[ ] Dockerize
+
+[ ] Deploy on GCP
